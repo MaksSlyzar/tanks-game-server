@@ -1,6 +1,7 @@
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import Player from "../room/Player";
 import Room from "../room/Room";
+import GameManager from "./GameManager";
 
 class RoomManager {
   rooms: Array<Room> = [];
@@ -8,24 +9,42 @@ class RoomManager {
 
   constructor() {}
 
-  getPlayer(id: string) {}
+  getPlayerById(id: string) {}
 
-  getPlayerIdByToken(token: string) {}
+  getPlayerByToken(token: string) {
+    return this.players.find(player => player.token == token);
+  }
+
+  getPlayerBySocketId (socketId: string) {
+    return this.players.find(player => player.socket.id == socketId);
+  }
+
+  createPlayer (socket: Socket, username: string, token: string) {
+    const player = new Player(socket, username, token);
+    this.players.push(player);
+    return player;
+  }
 
   getRoomByCode(roomCode: string): Room | undefined {
     return this.rooms.find((r) => r.roomCode == roomCode);
   }
 
-  join(roomCode: string, player: Player): boolean {
+  join(roomCode: string, player: Player) {
     const room = this.getRoomByCode(roomCode);
 
-    if (room == undefined) return false;
+    if (room == undefined) return null;
 
     this.rooms.map((r) => r.removePlayer(player.socket.id));
 
     room.joinRoom(player);
 
-    return true;
+    player.socket.join(room.roomCode);
+    player.roomCode = room.roomCode;
+    player.gameSession = "room";
+
+    player.socket.emit("joinRoomSuccessfully", room.networkData());
+
+    return room;
   }
 
   create(roomCode: string, io: Server): Room {

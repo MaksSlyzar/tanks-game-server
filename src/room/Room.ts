@@ -1,15 +1,19 @@
 import { Server } from "socket.io";
 import Player from "./Player";
+import GameManager from "../managers/GameManager";
 
 class Room {
     roomCode: string;
     players: Array<Player>;
     io: Server;
+    leaderPlayerId: string;
+    gameManager: GameManager|null = null;
 
     constructor (roomCode: string, io: Server) {
         this.roomCode = roomCode;
         this.players = [];
         this.io = io;
+        this.leaderPlayerId = "";
     }
 
     removePlayer (socketId: string) {
@@ -27,8 +31,23 @@ class Room {
     joinRoom (player: Player) {
         this.players.push(player);
         player.socket.join(this.roomCode);
-        console.log(this.players.map(p => p.networkData()))
-        this.io.to(this.roomCode).emit("updatePlayerList", { players: this.players.map(p => p.networkData())} );
+        player.roomReady = false;
+        this.updateRoomViewData();
+    }
+
+    updateRoomViewData () {
+        this.io.to(this.roomCode).emit("updateRoomViewData", this.networkData());
+    }
+
+    startGame () {
+        this.gameManager = new GameManager(this);
+    }
+
+    networkData () {
+        return {
+            roomName: this.roomCode,
+            players: this.players.map(player => player.networkData())
+        }
     }
 }
 
