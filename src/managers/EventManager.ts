@@ -32,7 +32,7 @@ class EventManager {
         res.send("qwerty");
       }
     );
-    const server = app.listen(3000, () => console.log("server started"));
+    const server = app.listen(3030, () => console.log("server started"));
 
     this.io = new Server(server, {
       cors: {
