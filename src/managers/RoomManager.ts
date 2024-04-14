@@ -2,12 +2,14 @@ import { Server, Socket } from "socket.io";
 import Player from "../room/Player";
 import Room from "../room/Room";
 import GameManager from "./GameManager";
+import TestingRoom from "../room/TestingRoom";
 
 class RoomManager {
-  rooms: Array<Room> = [];
+  rooms: Array<Room|TestingRoom> = [];
   players: Array<Player> = [];
 
-  constructor() {}
+  constructor() {
+  }
 
   getPlayerById(id: string) {}
 
@@ -24,7 +26,7 @@ class RoomManager {
     this.players.push(player);
     return player;
   }
-
+  
   getRoomByCode(roomCode: string): Room | undefined {
     return this.rooms.find((r) => r.roomCode == roomCode);
   }

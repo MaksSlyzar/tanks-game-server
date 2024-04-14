@@ -7,12 +7,15 @@ class Room {
     players: Array<Player>;
     io: Server;
     leaderPlayerId: string;
-    gameManager: GameManager|null = null;
+    gameManager: GameManager;
+    roomType: "Normal"|"Testing";
 
     constructor (roomCode: string, io: Server) {
         this.roomCode = roomCode;
         this.players = [];
         this.io = io;
+        this.gameManager = new GameManager(this);
+        this.roomType = "Normal";
         this.leaderPlayerId = "";
     }
 
@@ -28,7 +31,7 @@ class Room {
         return false;
     }
 
-    joinRoom (player: Player) {
+    joinRoom (player: Player): void {
         this.players.push(player);
         player.socket.join(this.roomCode);
         player.roomReady = false;
@@ -40,13 +43,14 @@ class Room {
     }
 
     startGame () {
-        this.gameManager = new GameManager(this);
+        this.gameManager.generateTanks();
     }
 
     networkData () {
         return {
             roomName: this.roomCode,
-            players: this.players.map(player => player.networkData())
+            players: this.players.map(player => player.networkData()),
+            roomType: this.roomType
         }
     }
 }
