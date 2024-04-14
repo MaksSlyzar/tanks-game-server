@@ -5,9 +5,8 @@ import { connect } from "mongoose";
 import bodyParser from "body-parser";
 import { json } from "body-parser";
 import cors from "cors";
+import RoomManager from "./RoomManager";
 
-//maksymsliuzar
-//C4Vn4oKMtsJbyEqo
 class EventManager {
   io: Server;
   listeningIds: string[] = [];
@@ -17,6 +16,7 @@ class EventManager {
     const urlencodedParser = bodyParser.urlencoded({
       extended: true,
     });
+    // app.use(cors({ }))
     app.use(urlencodedParser);
 
     app.get("/", (req, res) => {
@@ -32,7 +32,7 @@ class EventManager {
         res.send("qwerty");
       }
     );
-    const server = app.listen(3030, () => console.log("server started"));
+    const server = app.listen(3040, () => console.log("server started"));
 
     this.io = new Server(server, {
       cors: {
@@ -41,11 +41,11 @@ class EventManager {
       },
     });
 
-    connect(
-      "mongodb+srv://maksymsliuzar:C4Vn4oKMtsJbyEqo@cluster0.k9htvlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-    ).then(() => {
-      console.log("Db connected.");
-    });
+    // connect(
+    //   "mongodb+srv://maksymsliuzar:C4Vn4oKMtsJbyEqo@cluster0.k9htvlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+    // ).then(() => {
+    //   console.log("Db connected.");
+    // });
 
     this.setIo();
   }
@@ -53,6 +53,7 @@ class EventManager {
   run() {}
 
   setIo() {
+
     this.io.on("connection", (socket: Socket) => {
       if (this.io == null) return;
 
@@ -62,9 +63,12 @@ class EventManager {
         this.listeningIds.push(socket.id);
 
         for (let eventName in events) {
-          socket.on(eventName, (data: any) =>
-            events[eventName].execute(socket, this.io, data)
-          );
+          socket.on(eventName, (data: any) => {
+            const eventExecResult = events[eventName].execute(socket, this.io, data)
+          
+            if (eventExecResult)
+              socket.emit("error", "server can't execute this event.");
+          });
         }
       }
     });

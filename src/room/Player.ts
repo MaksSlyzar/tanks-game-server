@@ -1,7 +1,7 @@
 import { Socket } from "socket.io";
 import { generateToken } from "../server/events";
 import RoomManager from "../managers/RoomManager";
-import { EngeenierTankBody, HeavyTankBody } from "../GameObjects/TankBody";
+import { EngeenierTankBody, HeavyTankBody, TankBody } from "../GameObjects/TankBody";
 
 class Player {
   id: number;
@@ -14,7 +14,7 @@ class Player {
   roomReady: boolean = false;
   isRoomLeader: boolean;
   gameRole: "engeenier"|"heavy"|null;
-  tankBody: EngeenierTankBody|HeavyTankBody|null;
+  tankBody: TankBody|null;
 
   constructor(socket: Socket, username: string, token: string) {
     this.socket = socket;
@@ -38,7 +38,9 @@ class Player {
       gameSession: this.gameSession,
       isOnline: this.isOnline,
       roomReady: this.roomReady,
-      isRoomLeader: this.isRoomLeader
+      isRoomLeader: this.isRoomLeader,
+      tankBody: this.tankBody?.networkData(),
+      gameRole: this.gameRole
     };
 
     return netData; 

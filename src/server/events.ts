@@ -54,12 +54,22 @@ export const events: EventsPair = {
             
           room.updateRoomViewData();
         }
+      } else if (player.gameSession == "playing") {
+        if (player.roomCode != null) {
+          const room = RoomManager.getRoomByCode(player.roomCode);
+          
+          if (room == undefined)
+            return false;
+
+          room.gameManager?.createGameObjectsEvent(socket);
+        }
       }
       return true;
     },
   },
   connection: {
     execute(socket: Socket, io: Server, data: any) {
+      console.log("yasdasd")
       return true;
     },
   },
@@ -139,10 +149,50 @@ export const events: EventsPair = {
       if (player.isRoomLeader == false)
         return false;
 
-      //Run game
-      console.log("RUN GAME")
       room?.startGame();
       return true;
     },
+  },
+  sendMoveData: {
+    execute (socket, io, data) {
+      const player = RoomManager.getPlayerBySocketId(socket.id);
+
+      if (!player)
+        return false;
+
+      player.tankBody?.networkController(data);
+      return true;
+    }
+  },
+  sendSyncData: {
+    execute(socket, io, data) {
+      const player = RoomManager.getPlayerBySocketId(socket.id);
+
+      if (player == null)
+        return false;
+
+      if (player.tankBody == null)
+        return false;
+
+      player.tankBody.posX = data.tankBody.posX;
+      player.tankBody.posY = data.tankBody.posY;
+      player.tankBody.rotation = data.tankBody.rotation;
+      
+      return true;
+    },
+  },
+  useSpell: {
+    execute(socket, io, data) {
+      const player = RoomManager.getPlayerBySocketId(socket.id);
+
+      if (!player)
+        return false;
+
+      if (player.gameSession != "playing")
+        return false;
+
+      player.tankBody?.useSpell(data);
+      return true;
+    }
   }
 };
