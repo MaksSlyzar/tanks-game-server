@@ -7,6 +7,7 @@ const socket_io_1 = require("socket.io");
 const events_1 = require("../server/events");
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
+const cors_1 = __importDefault(require("cors"));
 class EventManager {
     constructor() {
         this.listeningIds = [];
@@ -14,10 +15,10 @@ class EventManager {
         const urlencodedParser = body_parser_1.default.urlencoded({
             extended: true,
         });
-        // app.use(cors({ }))
+        app.use((0, cors_1.default)({}));
         app.use(urlencodedParser);
         app.get("/", (req, res) => {
-            res.send("23er4t5yhtr");
+            res.send("Server stared.");
         });
         app.post("/create-user", urlencodedParser, (req, res) => {
             const body = req.body;
@@ -31,11 +32,6 @@ class EventManager {
                 methods: ["GET", "POST"],
             },
         });
-        // connect(
-        //   "mongodb+srv://maksymsliuzar:C4Vn4oKMtsJbyEqo@cluster0.k9htvlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-        // ).then(() => {
-        //   console.log("Db connected.");
-        // });
         this.setIo();
     }
     run() { }

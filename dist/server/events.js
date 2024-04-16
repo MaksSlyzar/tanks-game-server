@@ -15,7 +15,7 @@ exports.events = {
             const { username } = data;
             const player = RoomManager_1.default.createPlayer(socket, username, generateToken());
             socket.emit("authSuccessfully", Object.assign(Object.assign({}, player.networkData()), { token: player.token }));
-            const roomData = RoomManager_1.default.rooms.map(room => room.networkData());
+            const roomData = RoomManager_1.default.rooms.map((room) => room.networkData());
             socket.emit("updateRoomList", { roomsData: roomData });
             return true;
         },
@@ -33,7 +33,7 @@ exports.events = {
             socket.emit("authSuccessfully", Object.assign(Object.assign({}, player.networkData()), { token: player.token }));
             player.connect();
             if (player.gameSession == "menu") {
-                const roomData = RoomManager_1.default.rooms.map(room => room.networkData());
+                const roomData = RoomManager_1.default.rooms.map((room) => room.networkData());
                 socket.emit("updateRoomList", { roomsData: roomData });
             }
             else if (player.gameSession == "room") {
@@ -57,7 +57,6 @@ exports.events = {
     },
     connection: {
         execute(socket, io, data) {
-            console.log("yasdasd");
             return true;
         },
     },
@@ -69,7 +68,7 @@ exports.events = {
             RoomManager_1.default.create(data.roomName, io);
             RoomManager_1.default.join(data.roomName, player);
             player.isRoomLeader = true;
-            const roomData = RoomManager_1.default.rooms.map(room => room.networkData());
+            const roomData = RoomManager_1.default.rooms.map((room) => room.networkData());
             io.emit("updateRoomList", { roomsData: roomData });
             return true;
         },
@@ -132,7 +131,7 @@ exports.events = {
                 return false;
             (_a = player.tankBody) === null || _a === void 0 ? void 0 : _a.networkController(data);
             return true;
-        }
+        },
     },
     sendSyncData: {
         execute(socket, io, data) {
@@ -157,6 +156,6 @@ exports.events = {
                 return false;
             (_a = player.tankBody) === null || _a === void 0 ? void 0 : _a.useSpell(data);
             return true;
-        }
-    }
+        },
+    },
 };
