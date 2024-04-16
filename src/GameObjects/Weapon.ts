@@ -20,7 +20,7 @@ export class HeavyWeapon extends Weapon {
 
     constructor(tankBody: HeavyTankBody) {
         super();
-        this.rotationSpeed = 0.125;
+        this.rotationSpeed = 0.225;
         this.rotation = 0.09;
         this.tankBody = tankBody;
 

@@ -19,7 +19,7 @@ class HeavyWeapon extends Weapon {
         super();
         this.dx = 0;
         this.dy = 0;
-        this.rotationSpeed = 0.125;
+        this.rotationSpeed = 0.225;
         this.rotation = 0.09;
         this.tankBody = tankBody;
         if (tankBody.player.roomCode == null)

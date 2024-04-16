@@ -96,10 +96,8 @@ class GameManager {
 
     update() {
         this.currentTime = new Date();
-        this.diff =
-            this.currentTime.getTime() / 1000 - this.lastDate.getTime() / 1000;
-        this.deltaTime = this.diff * 10;
-        this.lastDate = this.currentTime;
+        this.diff = this.currentTime.getTime() - this.lastDate.getTime();
+        this.deltaTime = this.diff / 100;
 
         const gameObjects = [
             ...this.gameObjects.enemies,
@@ -125,6 +123,8 @@ class GameManager {
                 ),
             },
         });
+
+        this.lastDate = this.currentTime;
         setTimeout(() => this.update(), 10);
     }
 }
