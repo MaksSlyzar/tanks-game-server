@@ -8,12 +8,27 @@ export class Spell {
     player: Player;
     cooldown: number;
     spellType: "test" | "shoot" | null;
+    lastTime: Date;
+    currentTime: Date;
 
     constructor(gameManager: GameManager, player: Player) {
         this.gameManager = gameManager;
         this.player = player;
         this.cooldown = 0;
         this.spellType = null;
+        this.lastTime = new Date();
+        this.currentTime = new Date();
+    }
+
+    setCooldown() {
+        this.lastTime = new Date();
+    }
+
+    isCooldown() {
+        return (
+            (new Date().getTime() - this.lastTime.getTime()) / 1000 >
+            this.cooldown
+        );
     }
 
     execute() {}
@@ -22,11 +37,13 @@ export class Spell {
 export class ShootSpell extends Spell {
     constructor(gameManager: GameManager, player: Player) {
         super(gameManager, player);
-        this.cooldown = 4;
+        this.cooldown = 0.5;
         this.spellType = "shoot";
     }
 
     execute() {
+        if (this.isCooldown()) this.setCooldown();
+        else return;
         let tankBody = this.player.tankBody as HeavyTankBody;
 
         if (!tankBody) return;

@@ -8,6 +8,15 @@ class Spell {
         this.player = player;
         this.cooldown = 0;
         this.spellType = null;
+        this.lastTime = new Date();
+        this.currentTime = new Date();
+    }
+    setCooldown() {
+        this.lastTime = new Date();
+    }
+    isCooldown() {
+        return ((new Date().getTime() - this.lastTime.getTime()) / 1000 >
+            this.cooldown);
     }
     execute() { }
 }
@@ -15,10 +24,14 @@ exports.Spell = Spell;
 class ShootSpell extends Spell {
     constructor(gameManager, player) {
         super(gameManager, player);
-        this.cooldown = 4;
+        this.cooldown = 0.5;
         this.spellType = "shoot";
     }
     execute() {
+        if (this.isCooldown())
+            this.setCooldown();
+        else
+            return;
         let tankBody = this.player.tankBody;
         if (!tankBody)
             return;
