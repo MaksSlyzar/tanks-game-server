@@ -146,5 +146,17 @@ exports.events = {
             player.tankBody.rotation = data.tankBody.rotation;
             return true;
         },
+    },
+    useSpell: {
+        execute(socket, io, data) {
+            var _a;
+            const player = RoomManager_1.default.getPlayerBySocketId(socket.id);
+            if (!player)
+                return false;
+            if (player.gameSession != "playing")
+                return false;
+            (_a = player.tankBody) === null || _a === void 0 ? void 0 : _a.useSpell(data);
+            return true;
+        }
     }
 };

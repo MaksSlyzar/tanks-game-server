@@ -1,4 +1,10 @@
-import { Vector2d } from "../../modules/SAT";
+import GameManager from "../../managers/GameManager";
+import {
+    Vector2d,
+    quadColliderMesh,
+    satCollide,
+    updateShape,
+} from "../../modules/SAT";
 import GameObject from "../GameObject";
 
 export class Projectile extends GameObject {
@@ -6,20 +12,86 @@ export class Projectile extends GameObject {
     posX: number;
     posY: number;
     rotation: number;
-    
-    constructor (speed: number, position: Vector2d, rotation: number) {
+    tankBodyId: number;
+    width: number;
+    height: number;
+    gameManager: GameManager;
+
+    constructor(
+        speed: number,
+        position: Vector2d,
+        rotation: number,
+        tankBodyId: number,
+        gameManager: GameManager
+    ) {
         super();
         this.speed = speed;
         this.posX = position.x;
         this.posY = position.y;
         this.rotation = rotation;
+        this.tankBodyId = tankBodyId;
+        this.gameManager = gameManager;
+
+        this.width = 10;
+        this.height = 10;
+
+        this.collidingProps = {
+            activeShape: [],
+            shape: quadColliderMesh(this.width, this.height),
+        };
     }
 
-    update () {
+    update(deltaTime: number) {
+        if (this.collidingProps == null) return;
 
+        this.collidingProps.activeShape = updateShape(
+            this.posX + this.width / 2,
+            this.posY + this.height / 2,
+            this.rotation,
+            this.collidingProps.shape
+        );
+
+        const gameObjects = [...this.gameManager.gameObjects.tankBodies];
+
+        for (let go of gameObjects) {
+            if (go.id == this.id) continue;
+            if (go.collidingProps == null) continue;
+            if (go.id == this.tankBodyId) continue;
+
+            let collide = satCollide(
+                this.collidingProps.activeShape,
+                go.collidingProps.activeShape
+            );
+            if (collide) {
+                go.decraseHp(10);
+
+                for (
+                    let i = 0;
+                    i < this.gameManager.gameObjects.projectiles.length;
+                    i++
+                ) {
+                    const proj = this.gameManager.gameObjects.projectiles[i];
+
+                    if (proj.id == this.id)
+                        this.gameManager.gameObjects.projectiles.splice(i, 1);
+                }
+                break;
+            }
+        }
+
+        this.posX += Math.cos(this.rotation) * this.speed * deltaTime;
+        this.posY += Math.sin(this.rotation) * this.speed * deltaTime;
     }
 
-    render () {
+    render() {}
 
+    network() {
+        return {
+            id: this.id,
+            posX: this.posX,
+            posY: this.posY,
+            rotation: this.rotation,
+            tankBodyId: this.tankBodyId,
+        };
     }
 }

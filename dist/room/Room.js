@@ -6,10 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const GameManager_1 = __importDefault(require("../managers/GameManager"));
 class Room {
     constructor(roomCode, io) {
-        this.gameManager = null;
         this.roomCode = roomCode;
         this.players = [];
         this.io = io;
+        this.gameManager = new GameManager_1.default(this);
+        this.roomType = "Normal";
         this.leaderPlayerId = "";
     }
     removePlayer(socketId) {
@@ -32,12 +33,13 @@ class Room {
         this.io.to(this.roomCode).emit("updateRoomViewData", this.networkData());
     }
     startGame() {
-        this.gameManager = new GameManager_1.default(this);
+        this.gameManager.generateTanks();
     }
     networkData() {
         return {
             roomName: this.roomCode,
-            players: this.players.map(player => player.networkData())
+            players: this.players.map(player => player.networkData()),
+            roomType: this.roomType
         };
     }
 }

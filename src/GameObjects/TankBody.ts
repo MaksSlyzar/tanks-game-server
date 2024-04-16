@@ -1,5 +1,11 @@
+import GameManager from "../managers/GameManager";
 import RoomManager from "../managers/RoomManager";
-import { Vector2d, quadColliderMesh, satCollide, updateShape } from "../modules/SAT";
+import {
+    Vector2d,
+    quadColliderMesh,
+    satCollide,
+    updateShape,
+} from "../modules/SAT";
 import Player from "../room/Player";
 import GameObject from "./GameObject";
 import { Spell } from "./Spells/Spells";
@@ -9,11 +15,13 @@ export class TankBody extends GameObject {
     posX: number;
     posY: number;
     rotation: number;
-    _type: "heavy"|"engeenier"|"test";
+    _type: "heavy" | "engeenier" | "test";
     player: Player;
     spells: Array<Spell>;
+    hp: number;
+    maxHp: number;
 
-    constructor (_type: "heavy"|"engeenier"|"test", player: Player) {
+    constructor(_type: "heavy" | "engeenier" | "test", player: Player) {
         super();
         this.posX = 0;
         this.posY = 0;
@@ -21,20 +29,31 @@ export class TankBody extends GameObject {
         this._type = _type;
         this.player = player;
         this.spells = [];
+        this.hp = 100;
+        this.maxHp = 100;
     }
 
-    networkData () {
-        return {}
+    decraseHp(damage: number) {
+        //TODO: decrase hp function
+        this.hp -= damage;
+
+        if (this.hp < 0) {
+            this.hp = this.maxHp;
+            this.posX = 0;
+            this.posY = 0;
+        }
     }
 
-    useSpell (data: any) {};
-
-    networkController (data: {
-        rotate: "LEFT"|"RIGHT"|"NONE",
-        movement: "UP"|"DOWN"|"NONE"
-    }) {
-
+    networkData() {
+        return {};
     }
+
+    useSpell(data: any) {}
+
+    networkController(data: {
+        rotate: "LEFT" | "RIGHT" | "NONE";
+        movement: "UP" | "DOWN" | "NONE";
+    }) {}
 }
 
 export class HeavyTankBody extends TankBody {
@@ -45,21 +64,20 @@ export class HeavyTankBody extends TankBody {
     maxSpeed: number;
     minSpeed: number;
     speed: number;
-    engine: "UP"|"DOWN"|"OFF";
+    engine: "UP" | "DOWN" | "OFF";
     width: number = 116;
     height: number = 75;
     pushSpeed: number = 1.12;
     standartPushSpeed: number = 10;
     weapon: HeavyWeapon;
-    networkRotate: "LEFT"|"RIGHT"|"NONE";
-    networkMovement: "UP"|"DOWN"|"NONE";
-    hp: number;
-    maxHp: number;
+    networkRotate: "LEFT" | "RIGHT" | "NONE";
+    networkMovement: "UP" | "DOWN" | "NONE";
+    collision: boolean;
 
-    constructor (player: Player) {
+    constructor(player: Player) {
         super("heavy", player);
         this.speed = 0;
-        this.hp = 100;
+        this.hp = 80;
         this.maxHp = 100;
         this.maxSpeed = 20;
         this.rotationSpeed = 0.015;
@@ -73,37 +91,49 @@ export class HeavyTankBody extends TankBody {
         this.networkMovement = "NONE";
         this.collidingProps = {
             activeShape: [],
-            shape: quadColliderMesh(this.width, this.height)
+            shape: quadColliderMesh(this.width, this.height),
         };
         this.weapon = new HeavyWeapon(this);
+        this.collision = false;
     }
 
-    update (deltaTime: number) {
+    update(deltaTime: number) {
         const tempPosX = this.posX;
         const tempPosY = this.posY;
         const tempRotation = this.rotation;
 
         let rotationCollision = false;
 
-        this.posX += (Math.cos(this.rotation) * this.speed) * deltaTime;
-        this.posY += (Math.sin(this.rotation) * this.speed) * deltaTime;
+        this.posX += Math.cos(this.rotation) * this.speed * deltaTime;
+        this.posY += Math.sin(this.rotation) * this.speed * deltaTime;
 
+        this.collision = false;
         if (this.collidingProps != null) {
-            this.collidingProps.activeShape = updateShape(this.posX + this.width / 2, this.posY + this.height / 2, this.rotation, this.collidingProps.shape);
-            
+            this.collidingProps.activeShape = updateShape(
+                this.posX + this.width / 2,
+                this.posY + this.height / 2,
+                this.rotation,
+                this.collidingProps.shape
+            );
+
             if (this.player.roomCode) {
                 const room = RoomManager.getRoomByCode(this.player.roomCode);
+
                 if (room != undefined) {
-                    const tankBodies = room?.players.map(player => player.id == this.player.id? null: player.tankBody);
+                    const gameObjects = [
+                        ...room.gameManager.gameObjects.tankBodies,
+                    ];
 
-                    for (let go of tankBodies) {
-                        if (go == null)
-                            continue;
-                        if (go.collidingProps == null)
-                            continue;
+                    for (let go of gameObjects) {
+                        if (go.id == this.id) continue;
+                        if (go.collidingProps == null) continue;
 
-                        let collide = satCollide(this.collidingProps.activeShape, go.collidingProps.activeShape);
+                        let collide = satCollide(
+                            this.collidingProps.activeShape,
+                            go.collidingProps.activeShape
+                        );
                         if (collide) {
+                            this.collision = true;
                             this.posX = tempPosX;
                             this.posY = tempPosY;
                             this.speed = 0;
@@ -127,9 +157,7 @@ export class HeavyTankBody extends TankBody {
             if (this.networkRotate == "RIGHT") {
                 this.rotation += this.rotationSpeed;
             }
-        }
-
-        else if (this.networkMovement == "DOWN") {
+        } else if (this.networkMovement == "DOWN") {
             if (this.minSpeed < this.speed) {
                 this.speed -= this.pushSpeed;
                 this.engine = "DOWN";
@@ -156,22 +184,29 @@ export class HeavyTankBody extends TankBody {
         // }
 
         if (this.collidingProps != null) {
-            this.collidingProps.activeShape = updateShape(this.posX + this.width / 2, this.posY + this.height / 2, this.rotation, this.collidingProps.shape);
-
+            this.collidingProps.activeShape = updateShape(
+                this.posX + this.width / 2,
+                this.posY + this.height / 2,
+                this.rotation,
+                this.collidingProps.shape
+            );
 
             if (this.player.roomCode) {
                 const room = RoomManager.getRoomByCode(this.player.roomCode);
-                
+
                 if (room != undefined) {
-                    const tankBodies = room?.players.map(player => player.id == this.player.id? null: player.tankBody);
+                    const tankBodies = room?.players.map((player) =>
+                        player.id == this.player.id ? null : player.tankBody
+                    );
 
                     for (let go of tankBodies) {
-                        if (go == null)
-                            continue;
-                        if (go.collidingProps == null)
-                            return;
+                        if (go == null) continue;
+                        if (go.collidingProps == null) return;
 
-                        let collide = satCollide(this.collidingProps.activeShape, go.collidingProps.activeShape);
+                        let collide = satCollide(
+                            this.collidingProps.activeShape,
+                            go.collidingProps.activeShape
+                        );
                         if (collide) {
                             this.rotation = tempRotation;
                             break;
@@ -193,50 +228,52 @@ export class HeavyTankBody extends TankBody {
         }
 
         this.weapon.update(deltaTime);
-        
     }
 
-    networkController (data: {
-        rotate: "LEFT"|"RIGHT"|"NONE",
-        movement: "UP"|"DOWN"|"NONE",
+    networkController(data: {
+        rotate: "LEFT" | "RIGHT" | "NONE";
+        movement: "UP" | "DOWN" | "NONE";
         weapon: {
-            dx: number,
-            dy: number
-        }
+            dx: number;
+            dy: number;
+        };
     }) {
         this.networkRotate = data.rotate;
         this.networkMovement = data.movement;
         this.weapon.networkController(data.weapon);
     }
 
-    useSpell (data: any) {
+    useSpell(data: any) {
         const { spellType } = data;
 
-        const spell = this.spells.find(sp => sp.spellType == spellType);
+        const spell = this.spells.find((sp) => sp.spellType == spellType);
 
-        if (spell != undefined)
-            return;
+        if (spell != undefined) return;
 
         this.weapon.useSpell(data);
     }
 
     networkData() {
         return {
+            id: this.id,
             posX: this.posX,
             posY: this.posY,
             rotation: this.rotation,
             hp: this.hp,
             maxHp: this.maxHp,
             weapon: this.weapon.network(),
-        }
+            playerId: this.player.id,
+            gameObjectType: "TankBody",
+            _type: this._type,
+            collision: this.collision,
+        };
     }
 }
 
 export class EngeenierTankBody extends TankBody {
     width: number;
     height: number;
-
-    constructor (player: Player) {
+    constructor(player: Player) {
         super("engeenier", player);
         this.width = 0;
         this.height = 0;

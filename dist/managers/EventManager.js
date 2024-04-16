@@ -6,10 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_1 = require("socket.io");
 const events_1 = require("../server/events");
 const express_1 = __importDefault(require("express"));
-const mongoose_1 = require("mongoose");
 const body_parser_1 = __importDefault(require("body-parser"));
-//maksymsliuzar
-//C4Vn4oKMtsJbyEqo
 class EventManager {
     constructor() {
         this.listeningIds = [];
@@ -27,16 +24,18 @@ class EventManager {
             console.log(body);
             res.send("qwerty");
         });
-        const server = app.listen(3020, () => console.log("server started"));
+        const server = app.listen(3040, () => console.log("server started"));
         this.io = new socket_io_1.Server(server, {
             cors: {
                 origin: "*",
                 methods: ["GET", "POST"],
             },
         });
-        (0, mongoose_1.connect)("mongodb+srv://maksymsliuzar:C4Vn4oKMtsJbyEqo@cluster0.k9htvlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").then(() => {
-            console.log("Db connected.");
-        });
+        // connect(
+        //   "mongodb+srv://maksymsliuzar:C4Vn4oKMtsJbyEqo@cluster0.k9htvlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+        // ).then(() => {
+        //   console.log("Db connected.");
+        // });
         this.setIo();
     }
     run() { }
@@ -48,7 +47,11 @@ class EventManager {
             if (this.listeningIds.includes(socket.id) == false) {
                 this.listeningIds.push(socket.id);
                 for (let eventName in events_1.events) {
-                    socket.on(eventName, (data) => events_1.events[eventName].execute(socket, this.io, data));
+                    socket.on(eventName, (data) => {
+                        const eventExecResult = events_1.events[eventName].execute(socket, this.io, data);
+                        if (eventExecResult)
+                            socket.emit("error", "server can't execute this event.");
+                    });
                 }
             }
         });
