@@ -84,17 +84,14 @@ class HeavyTankBody extends TankBody {
                             continue;
                         if (go.collidingProps == null)
                             continue;
-                        // let collide = satCollide(
-                        //     this.collidingProps.activeShape,
-                        //     go.collidingProps.activeShape
-                        // );
-                        // if (collide) {
-                        //     this.collision = true;
-                        //     this.posX = tempPosX;
-                        //     this.posY = tempPosY;
-                        //     this.speed = 0;
-                        //     break;
-                        // }
+                        let collide = (0, SAT_1.satCollide)(this.collidingProps.activeShape, go.collidingProps.activeShape);
+                        if (collide) {
+                            this.collision = true;
+                            // this.posX = tempPosX;
+                            this.speed = 1;
+                            // this.posY = tempPosY;
+                            this.speed = 0;
+                        }
                         const polygon1 = {
                             posX: this.posX,
                             posY: this.posY,
@@ -105,7 +102,7 @@ class HeavyTankBody extends TankBody {
                             posY: go.posY,
                             polygon: go.collidingProps.activeShape,
                         };
-                        let collide = (0, SAT_1.diagCollide)(polygon1, polygon2);
+                        (0, SAT_1.diagCollide)(polygon1, polygon2);
                         // if (collide) continue;
                         // (this.targetX - this.posX) * coef
                         this.posX = polygon1.posX;

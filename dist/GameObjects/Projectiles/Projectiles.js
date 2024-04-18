@@ -15,6 +15,8 @@ class Projectile extends GameObject_1.default {
         this.rotation = rotation;
         this.tankBodyId = tankBodyId;
         this.gameManager = gameManager;
+        this.startX = position.x;
+        this.startY = position.y;
         this.width = 10;
         this.height = 10;
         this.collidingProps = {
@@ -47,6 +49,13 @@ class Projectile extends GameObject_1.default {
         }
         this.posX += Math.cos(this.rotation) * this.speed * deltaTime;
         this.posY += Math.sin(this.rotation) * this.speed * deltaTime;
+        const distance = Math.sqrt(Math.pow(Math.abs(this.posY - this.startY), 2) +
+            Math.pow(Math.abs(this.startX - this.posX), 2));
+        if (distance > 1000) {
+            const projectile = this.gameManager.gameObjects.projectiles.findIndex((_projectile) => _projectile.id == this.id);
+            if (projectile != null)
+                this.gameManager.gameObjects.projectiles.splice(projectile, 1);
+        }
     }
     render() { }
     network() {
