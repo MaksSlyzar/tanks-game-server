@@ -6,6 +6,7 @@ import {
 } from "../GameObjects/TankBody";
 import Room from "../room/Room";
 import GameObject from "../GameObjects/GameObject";
+import { BaseBuild, Build } from "../GameObjects/Builds/Builds";
 
 class GameManager {
     room: Room;
@@ -17,6 +18,7 @@ class GameManager {
         tankBodies: Array<TankBody>;
         projectiles: Array<GameObject>;
         enemies: Array<GameObject>;
+        builds: Array<Build>;
     };
 
     constructor(room: Room) {
@@ -30,6 +32,7 @@ class GameManager {
             tankBodies: [],
             projectiles: [],
             enemies: [],
+            builds: [],
         };
     }
 
@@ -50,6 +53,8 @@ class GameManager {
                 this.gameObjects.tankBodies.push(player.tankBody);
             }
         });
+
+        this.gameObjects.builds.push(new BaseBuild());
 
         this.room.players.map((pl) => (pl.gameSession = "playing"));
 
@@ -75,6 +80,9 @@ class GameManager {
                     projectiles: this.gameObjects.projectiles.map(
                         (projectile) => projectile.network()
                     ),
+                    builds: this.gameObjects.builds.map((build) =>
+                        build.network()
+                    ),
                 },
             });
         else
@@ -89,6 +97,9 @@ class GameManager {
                     ),
                     projectiles: this.gameObjects.projectiles.map(
                         (projectile) => projectile.network()
+                    ),
+                    builds: this.gameObjects.builds.map((build) =>
+                        build.network()
                     ),
                 },
             });
@@ -121,6 +132,7 @@ class GameManager {
                 projectiles: this.gameObjects.projectiles.map((projectile) =>
                     projectile.network()
                 ),
+                builds: this.gameObjects.builds.map((build) => build.network()),
             },
         });
 

@@ -92,6 +92,7 @@ export class HeavyWeapon extends Weapon {
     network() {
         return {
             rotation: this.rotation,
+            spells: this.spells.map((spell) => spell.network()),
         };
     }
 

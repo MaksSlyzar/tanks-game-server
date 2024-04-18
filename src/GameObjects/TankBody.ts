@@ -2,6 +2,7 @@ import GameManager from "../managers/GameManager";
 import RoomManager from "../managers/RoomManager";
 import {
     Vector2d,
+    diagCollide,
     quadColliderMesh,
     satCollide,
     updateShape,
@@ -80,7 +81,7 @@ export class HeavyTankBody extends TankBody {
         this.hp = 80;
         this.maxHp = 100;
         this.maxSpeed = 20;
-        this.rotationSpeed = 0.015;
+        this.rotationSpeed = 0.115;
         this.posX = 1110;
         this.posY = 1000;
         this.rotation = 0.03;
@@ -128,21 +129,52 @@ export class HeavyTankBody extends TankBody {
                         if (go.id == this.id) continue;
                         if (go.collidingProps == null) continue;
 
-                        let collide = satCollide(
-                            this.collidingProps.activeShape,
-                            go.collidingProps.activeShape
-                        );
-                        if (collide) {
-                            this.collision = true;
-                            this.posX = tempPosX;
-                            this.posY = tempPosY;
-                            this.speed = 0;
-                            break;
-                        }
+                        // let collide = satCollide(
+                        //     this.collidingProps.activeShape,
+                        //     go.collidingProps.activeShape
+                        // );
+                        // if (collide) {
+                        //     this.collision = true;
+                        //     this.posX = tempPosX;
+                        //     this.posY = tempPosY;
+                        //     this.speed = 0;
+                        //     break;
+                        // }
+
+                        const polygon1 = {
+                            posX: this.posX,
+                            posY: this.posY,
+                            polygon: this.collidingProps.activeShape,
+                        };
+
+                        const polygon2 = {
+                            posX: go.posX,
+                            posY: go.posY,
+                            polygon: go.collidingProps.activeShape,
+                        };
+
+                        let collide = diagCollide(polygon1, polygon2);
+                        // if (collide) continue;
+
+                        // (this.targetX - this.posX) * coef
+                        this.posX = polygon1.posX;
+                        this.posY = polygon1.posY;
+
+                        // go.posX = polygon2.posX;
+                        // go.posY = polygon2.posY;
+
+                        // this.collision = collide;
                     }
                 }
             }
         }
+
+        let pushRotationSpeed = this.rotationSpeed;
+        // this.speed == 0
+        //     ? this.rotationSpeed
+        //     : this.rotationSpeed - this.speed / 100;
+
+        // console.log(pushRotationSpeed);
 
         this.engine = "OFF";
         if (this.networkMovement == "UP") {
@@ -152,10 +184,10 @@ export class HeavyTankBody extends TankBody {
             }
 
             if (this.networkRotate == "LEFT") {
-                this.rotation -= this.rotationSpeed;
+                this.rotation -= pushRotationSpeed * deltaTime;
             }
             if (this.networkRotate == "RIGHT") {
-                this.rotation += this.rotationSpeed;
+                this.rotation += pushRotationSpeed * deltaTime;
             }
         } else if (this.networkMovement == "DOWN") {
             if (this.minSpeed < this.speed) {
@@ -164,17 +196,17 @@ export class HeavyTankBody extends TankBody {
             }
 
             if (this.networkRotate == "LEFT") {
-                this.rotation += this.rotationSpeed;
+                this.rotation += pushRotationSpeed * deltaTime;
             }
             if (this.networkRotate == "RIGHT") {
-                this.rotation -= this.rotationSpeed;
+                this.rotation -= pushRotationSpeed * deltaTime;
             }
         } else {
             if (this.networkRotate == "LEFT") {
-                this.rotation -= this.rotationSpeed;
+                this.rotation -= pushRotationSpeed * deltaTime;
             }
             if (this.networkRotate == "RIGHT") {
-                this.rotation += this.rotationSpeed;
+                this.rotation += pushRotationSpeed * deltaTime;
             }
         }
 
@@ -266,6 +298,7 @@ export class HeavyTankBody extends TankBody {
             gameObjectType: "TankBody",
             _type: this._type,
             collision: this.collision,
+            spells: this.spells.map((spell) => spell.network()),
         };
     }
 }

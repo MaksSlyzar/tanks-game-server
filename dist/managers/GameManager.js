@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const TankBody_1 = require("../GameObjects/TankBody");
+const Builds_1 = require("../GameObjects/Builds/Builds");
 class GameManager {
     constructor(room) {
         this.room = room;
@@ -12,6 +13,7 @@ class GameManager {
             tankBodies: [],
             projectiles: [],
             enemies: [],
+            builds: [],
         };
     }
     generateTanks() {
@@ -29,6 +31,7 @@ class GameManager {
                 this.gameObjects.tankBodies.push(player.tankBody);
             }
         });
+        this.gameObjects.builds.push(new Builds_1.BaseBuild());
         this.room.players.map((pl) => (pl.gameSession = "playing"));
         this.createGameObjectsEvent(null);
         this.update();
@@ -42,6 +45,7 @@ class GameManager {
                     enemies: this.gameObjects.enemies.map((gameObject) => gameObject.network()),
                     tankBodies: this.gameObjects.tankBodies.map((tankBody) => tankBody.networkData()),
                     projectiles: this.gameObjects.projectiles.map((projectile) => projectile.network()),
+                    builds: this.gameObjects.builds.map((build) => build.network()),
                 },
             });
         else
@@ -51,6 +55,7 @@ class GameManager {
                     enemies: this.gameObjects.enemies.map((gameObject) => gameObject.network()),
                     tankBodies: this.gameObjects.tankBodies.map((tankBody) => tankBody.networkData()),
                     projectiles: this.gameObjects.projectiles.map((projectile) => projectile.network()),
+                    builds: this.gameObjects.builds.map((build) => build.network()),
                 },
             });
     }
@@ -72,6 +77,7 @@ class GameManager {
                 enemies: this.gameObjects.enemies.map((gameObject) => gameObject.network()),
                 tankBodies: this.gameObjects.tankBodies.map((tankBody) => tankBody.networkData()),
                 projectiles: this.gameObjects.projectiles.map((projectile) => projectile.network()),
+                builds: this.gameObjects.builds.map((build) => build.network()),
             },
         });
         this.lastDate = this.currentTime;

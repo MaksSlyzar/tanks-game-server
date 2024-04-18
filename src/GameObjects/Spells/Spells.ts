@@ -32,6 +32,13 @@ export class Spell {
     }
 
     execute() {}
+
+    network() {
+        return {
+            cooldown: this.cooldown,
+            lastTime: this.lastTime,
+        };
+    }
 }
 
 export class ShootSpell extends Spell {
@@ -56,12 +63,8 @@ export class ShootSpell extends Spell {
         const spawnY =
             Math.sin(weaponRotation + rotation) * 90 + posY + height / 2;
 
-        // const bullet = new Bullet();
-        // bullet.posX = spawnX + this.tankBody.posX + this.tankBody.width / 2;
-        // bullet.posY = spawnY + this.tankBody.posY + this.tankBody.height / 2;
-
         const projectile = new Projectile(
-            100,
+            200,
             { x: spawnX, y: spawnY },
             rotation + weaponRotation,
             tankBody.id,

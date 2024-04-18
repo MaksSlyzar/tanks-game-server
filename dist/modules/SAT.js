@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.satCollide = exports.updateShape = exports.quadColliderMesh = void 0;
+exports.diagCollide = exports.satCollide = exports.updateShape = exports.quadColliderMesh = void 0;
 function quadColliderMesh(width, height) {
     const polygon = [
         { x: -width / 2, y: -height / 2 },
@@ -15,8 +15,12 @@ function updateShape(posX, posY, angle, shape) {
     const output = [...shape];
     for (let i = 0; i < output.length; i++) {
         output[i] = {
-            x: output[i].x * Math.cos(angle) - output[i].y * Math.sin(angle) + posX,
-            y: output[i].x * Math.sin(angle) + output[i].y * Math.cos(angle) + posY,
+            x: output[i].x * Math.cos(angle) -
+                output[i].y * Math.sin(angle) +
+                posX,
+            y: output[i].x * Math.sin(angle) +
+                output[i].y * Math.cos(angle) +
+                posY,
         };
     }
     return output;
@@ -59,3 +63,43 @@ function satCollide(box1, box2) {
     return true;
 }
 exports.satCollide = satCollide;
+function diagCollide(box1, box2) {
+    let poly1 = box1;
+    let poly2 = box2;
+    let collide = false;
+    for (let shape = 0; shape < 2; shape++) {
+        if (shape == 1) {
+            poly1 = box2;
+            poly2 = box1;
+        }
+        for (let p = 0; p < poly1.polygon.length; p++) {
+            let line_r1s = { x: poly1.posX, y: poly1.posY };
+            let line_r1e = { x: poly1.polygon[p].x, y: poly1.polygon[p].y };
+            let displacement = { x: 0, y: 0 };
+            for (let q = 0; q < poly2.polygon.length; q++) {
+                let line_r2s = { x: poly2.polygon[q].x, y: poly2.polygon[q].y };
+                let line_r2e = {
+                    x: poly2.polygon[(q + 1) % poly2.polygon.length].x,
+                    y: poly2.polygon[(q + 1) % poly2.polygon.length].y,
+                };
+                let h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) -
+                    (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+                let t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) +
+                    (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) /
+                    h;
+                let t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) +
+                    (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) /
+                    h;
+                if (t1 >= 0.0 && t1 < 1.0 && t2 >= 0.0 && t2 < 1.0) {
+                    displacement.x += (1.0 - t1) * (line_r1e.x - line_r1s.x);
+                    displacement.y += (1.0 - t1) * (line_r1e.y - line_r1s.y);
+                    collide = true;
+                }
+            }
+            box1.posX += displacement.x * (shape == 0 ? -1 : +1);
+            box1.posY += displacement.y * (shape == 0 ? -1 : +1);
+        }
+    }
+    return collide;
+}
+exports.diagCollide = diagCollide;

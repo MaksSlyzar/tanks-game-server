@@ -19,6 +19,12 @@ class Spell {
             this.cooldown);
     }
     execute() { }
+    network() {
+        return {
+            cooldown: this.cooldown,
+            lastTime: this.lastTime,
+        };
+    }
 }
 exports.Spell = Spell;
 class ShootSpell extends Spell {
@@ -39,10 +45,7 @@ class ShootSpell extends Spell {
         const weaponRotation = tankBody.weapon.rotation;
         const spawnX = Math.cos(weaponRotation + rotation) * 90 + posX + width / 2;
         const spawnY = Math.sin(weaponRotation + rotation) * 90 + posY + height / 2;
-        // const bullet = new Bullet();
-        // bullet.posX = spawnX + this.tankBody.posX + this.tankBody.width / 2;
-        // bullet.posY = spawnY + this.tankBody.posY + this.tankBody.height / 2;
-        const projectile = new Projectiles_1.Projectile(100, { x: spawnX, y: spawnY }, rotation + weaponRotation, tankBody.id, this.gameManager);
+        const projectile = new Projectiles_1.Projectile(200, { x: spawnX, y: spawnY }, rotation + weaponRotation, tankBody.id, this.gameManager);
         this.gameManager.gameObjects.projectiles.push(projectile);
     }
 }
