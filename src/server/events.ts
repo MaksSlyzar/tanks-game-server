@@ -24,6 +24,7 @@ export const events: EventsPair = {
                 username,
                 generateToken()
             );
+            socket.join("menu");
 
             socket.emit("authSuccessfully", {
                 ...player.networkData(),
@@ -55,6 +56,7 @@ export const events: EventsPair = {
             player.connect();
 
             if (player.gameSession == "menu") {
+                socket.join("menu");
                 const roomData = RoomManager.rooms.map((room) =>
                     room.networkData()
                 );
@@ -91,14 +93,15 @@ export const events: EventsPair = {
             if (player == null) return false;
 
             RoomManager.create(data.roomName, io);
-            RoomManager.join(data.roomName, player);
 
             player.isRoomLeader = true;
 
             const roomData = RoomManager.rooms.map((room) =>
                 room.networkData()
             );
-            io.emit("updateRoomList", { roomsData: roomData });
+            io.to("menu").emit("updateRoomList", { roomsData: roomData });
+
+            RoomManager.join(data.roomName, player);
             return true;
         },
     },
@@ -198,4 +201,28 @@ export const events: EventsPair = {
             return true;
         },
     },
+    exitRoom: {
+        execute(socket, io, data) {
+            const player = RoomManager.getPlayerBySocketId(socket.id);
+
+            if (!player) return false;
+            if (!player.roomCode) return false;
+
+            const room = RoomManager.getRoomByCode(player.roomCode);
+
+            if (!room) return false;
+
+            room.removePlayer(socket.id);
+
+            player.roomCode = null;
+            player.isRoomLeader = false;
+            player.gameSession = "menu";
+
+            const roomData = RoomManager.rooms.map((room) =>
+                room.networkData()
+            );
+            socket.emit("updateRoomList", { roomsData: roomData });
+            return true;
+        },
+    }
 };

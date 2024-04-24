@@ -10,7 +10,7 @@ class TestingRoom extends Room {
     joinRoom (player: Player): void {
         if (this.players.length == 0) { 
             player.isRoomLeader = true;
-            this.leaderPlayerId = String(player.id);
+            // this.leaderPlayerId = String(player.id);
         }
 
         this.players.push(player);

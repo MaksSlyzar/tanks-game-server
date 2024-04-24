@@ -31,6 +31,12 @@ class RoomManager {
     return this.rooms.find((r) => r.roomCode == roomCode);
   }
 
+  deleteRoom (roomCode: string) {
+    const roomIndex = this.rooms.findIndex(room => room.roomCode == roomCode);
+    if (roomCode)
+        this.rooms.splice(roomIndex, 1);
+  }
+
   join(roomCode: string, player: Player) {
     const room = this.getRoomByCode(roomCode);
 
