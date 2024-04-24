@@ -39,8 +39,8 @@ class BaseBuild extends Build {
         super();
         this.width = 96;
         this.height = 96;
-        this.posX = 0;
-        this.posY = 0;
+        this.posX = 500;
+        this.posY = 500;
         this.maxHp = 100;
         this.hp = this.maxHp;
         this.type = "base";

@@ -10,12 +10,16 @@ export default class GameObject {
         activeShape: Array<Vector2d>;
     } | null = null;
     id: number;
+    tag: string;
 
     constructor() {
         this.id = Number(generateToken());
+        this.tag = "";
     }
 
     update(deltaTime: number) {}
 
     network() {}
+
+    onCollide(posX: number, posY: number, gameObject: GameObject) {}
 }

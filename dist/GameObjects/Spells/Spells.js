@@ -43,8 +43,8 @@ class ShootSpell extends Spell {
             return;
         const { rotation, width, height, posX, posY } = tankBody;
         const weaponRotation = tankBody.weapon.rotation;
-        const spawnX = Math.cos(weaponRotation + rotation) * 90 + posX + width / 2;
-        const spawnY = Math.sin(weaponRotation + rotation) * 90 + posY + height / 2;
+        const spawnX = Math.cos(weaponRotation + rotation) * 70 + posX + width / 2;
+        const spawnY = Math.sin(weaponRotation + rotation) * 70 + posY + height / 2;
         const projectile = new Projectiles_1.Projectile(200, { x: spawnX, y: spawnY }, rotation + weaponRotation, tankBody.id, this.gameManager);
         this.gameManager.gameObjects.projectiles.push(projectile);
     }

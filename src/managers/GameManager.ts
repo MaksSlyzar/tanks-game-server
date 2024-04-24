@@ -7,6 +7,8 @@ import {
 import Room from "../room/Room";
 import GameObject from "../GameObjects/GameObject";
 import { BaseBuild, Build } from "../GameObjects/Builds/Builds";
+import { Enemy, TestEnemy } from "../GameObjects/Enemies/Enemies";
+import { diagCollide, satCollide } from "../modules/SAT";
 
 class GameManager {
     room: Room;
@@ -54,7 +56,9 @@ class GameManager {
             }
         });
 
-        this.gameObjects.builds.push(new BaseBuild());
+        const baseBuild = new BaseBuild();
+        this.gameObjects.enemies.push(new TestEnemy(baseBuild));
+        this.gameObjects.builds.push(baseBuild);
 
         this.room.players.map((pl) => (pl.gameSession = "playing"));
 
@@ -105,6 +109,41 @@ class GameManager {
             });
     }
 
+    collision() {
+        const collidingGameObjects = [
+            ...this.gameObjects.builds.filter(
+                (_build) => _build.collidingProps != null
+            ),
+            ...this.gameObjects.enemies.filter(
+                (_enemy) => _enemy.collidingProps != null
+            ),
+            ...this.gameObjects.tankBodies.filter(
+                (_tankBody) => _tankBody.collidingProps != null
+            ),
+        ];
+
+        collidingGameObjects.forEach((gameObject) => {
+            if (gameObject.collidingProps == null) return;
+
+            for (let testCollide of collidingGameObjects) {
+                if (testCollide.id == gameObject.id) return;
+                if (testCollide.collidingProps == null) continue;
+
+                let collide = satCollide(
+                    gameObject.collidingProps.activeShape,
+                    testCollide.collidingProps.activeShape
+                );
+
+                if (!collide) return;
+
+                // diagCollide(polygon1, polygon2);
+
+                gameObject.onCollide(0, 0, testCollide);
+                testCollide.onCollide(0, 0, gameObject);
+            }
+        });
+    }
+
     update() {
         this.currentTime = new Date();
         this.diff = this.currentTime.getTime() - this.lastDate.getTime();
@@ -119,6 +158,8 @@ class GameManager {
         gameObjects.map((go) => {
             go.update(this.deltaTime);
         });
+
+        this.collision();
 
         this.room.io.to(this.room.roomCode).emit("sendSyncData", {
             players: this.room.players.map((player) => player.networkData()),

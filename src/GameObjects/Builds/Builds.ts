@@ -43,8 +43,8 @@ export class BaseBuild extends Build {
 
     constructor() {
         super();
-        this.posX = 0;
-        this.posY = 0;
+        this.posX = 1000;
+        this.posY = 1000;
         this.maxHp = 100;
         this.hp = this.maxHp;
         this.type = "base";

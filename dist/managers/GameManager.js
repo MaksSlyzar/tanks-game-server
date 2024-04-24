@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const TankBody_1 = require("../GameObjects/TankBody");
 const Builds_1 = require("../GameObjects/Builds/Builds");
+const Enemies_1 = require("../GameObjects/Enemies/Enemies");
 class GameManager {
     constructor(room) {
         this.room = room;
@@ -31,7 +32,9 @@ class GameManager {
                 this.gameObjects.tankBodies.push(player.tankBody);
             }
         });
-        this.gameObjects.builds.push(new Builds_1.BaseBuild());
+        const baseBuild = new Builds_1.BaseBuild();
+        this.gameObjects.enemies.push(new Enemies_1.TestEnemy(baseBuild));
+        this.gameObjects.builds.push(baseBuild);
         this.room.players.map((pl) => (pl.gameSession = "playing"));
         this.createGameObjectsEvent(null);
         this.update();

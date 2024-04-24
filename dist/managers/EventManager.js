@@ -25,7 +25,7 @@ class EventManager {
             console.log(body);
             res.send("qwerty");
         });
-        const server = app.listen(3040, () => console.log("server started"));
+        const server = app.listen(3050, () => console.log("server started"));
         this.io = new socket_io_1.Server(server, {
             cors: {
                 origin: "*",
