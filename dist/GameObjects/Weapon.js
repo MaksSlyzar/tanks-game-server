@@ -8,15 +8,15 @@ const RoomManager_1 = __importDefault(require("../managers/RoomManager"));
 const GameObject_1 = __importDefault(require("./GameObject"));
 const Spells_1 = require("./Spells/Spells");
 class Weapon extends GameObject_1.default {
-    constructor() {
-        super();
+    constructor(gameManager) {
+        super(gameManager);
         this.spells = [];
     }
 }
 exports.Weapon = Weapon;
 class HeavyWeapon extends Weapon {
-    constructor(tankBody) {
-        super();
+    constructor(gameManager, tankBody) {
+        super(gameManager);
         this.dx = 0;
         this.dy = 0;
         this.rotationSpeed = 0.225;
@@ -30,14 +30,6 @@ class HeavyWeapon extends Weapon {
         this.spells.push(new Spells_1.ShootSpell(room.gameManager, tankBody.player));
     }
     update(deltaTime) {
-        // if (CanvasManager.keyDown("e")) {
-        //     this.rotation -= 0.02;
-        // }
-        // if (CanvasManager.keyDown("r")) {
-        //     this.rotation += 0.02;
-        // }
-        // const dx = CanvasManager.mouse.x - this.tankBody.posX -45;
-        // const dy = CanvasManager.mouse.y - this.tankBody.posY -40;
         const addRotation = -Math.atan2(this.dx, this.dy) + (90 * Math.PI) / 180;
         if (Math.abs(addRotation - this.rotation - this.tankBody.rotation) <=
             0.04) {

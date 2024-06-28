@@ -22,9 +22,14 @@ export class TankBody extends GameObject {
     hp: number;
     maxHp: number;
     tag = "tankBody";
+    gold: number = 0;
 
-    constructor(_type: "heavy" | "engeenier" | "test", player: Player) {
-        super();
+    constructor(
+        gameManager: GameManager,
+        _type: "heavy" | "engeenier" | "test",
+        player: Player
+    ) {
+        super(gameManager);
         this.posX = 0;
         this.posY = 0;
         this.rotation = 0;
@@ -36,13 +41,12 @@ export class TankBody extends GameObject {
     }
 
     decraseHp(damage: number) {
-        //TODO: decrase hp function
         this.hp -= damage;
 
         if (this.hp < 0) {
             this.hp = this.maxHp;
-            this.posX = 0;
-            this.posY = 0;
+            this.posX = 50;
+            this.posY = 50;
         }
     }
 
@@ -77,16 +81,17 @@ export class HeavyTankBody extends TankBody {
     collision: boolean;
     tempPosX: number = 0;
     tempPosY: number = 0;
+    tag: string = "tank";
 
-    constructor(player: Player) {
-        super("heavy", player);
+    constructor(gameManager: GameManager, player: Player) {
+        super(gameManager, "heavy", player);
         this.speed = 0;
-        this.hp = 80;
+        this.hp = 100;
         this.maxHp = 100;
         this.maxSpeed = 20;
         this.rotationSpeed = 0.115;
-        this.posX = 1110;
-        this.posY = 1000;
+        this.posX = 300;
+        this.posY = 300;
         this.rotation = 0.03;
         this.minSpeed = -10;
         this.engine = "OFF";
@@ -97,7 +102,7 @@ export class HeavyTankBody extends TankBody {
             activeShape: [],
             shape: quadColliderMesh(this.width, this.height),
         };
-        this.weapon = new HeavyWeapon(this);
+        this.weapon = new HeavyWeapon(this.gameManager, this);
         this.collision = false;
     }
 
@@ -123,73 +128,8 @@ export class HeavyTankBody extends TankBody {
             this.speed = 0;
             this.collision = false;
         }
-        // this.collision = false;
-        // if (this.collidingProps != null) {
-        //     this.collidingProps.activeShape = updateShape(
-        //         this.posX + this.width / 2,
-        //         this.posY + this.height / 2,
-        //         this.rotation,
-        //         this.collidingProps.shape
-        //     );
-
-        //     if (this.player.roomCode) {
-        //         const room = RoomManager.getRoomByCode(this.player.roomCode);
-
-        //         if (room != undefined) {
-        //             const gameObjects = [
-        //                 ...room.gameManager.gameObjects.tankBodies,
-        //             ];
-
-        //             for (let go of gameObjects) {
-        //                 if (go.id == this.id) continue;
-        //                 if (go.collidingProps == null) continue;
-
-        //                 let collide = satCollide(
-        //                     this.collidingProps.activeShape,
-        //                     go.collidingProps.activeShape
-        //                 );
-        //                 if (collide) {
-        //                     this.collision = true;
-        //                     // this.posX = tempPosX;
-        //                     this.speed = 1;
-        //                     // this.posY = tempPosY;
-        //                     this.speed = 0;
-        //                 }
-
-        //                 const polygon1 = {
-        //                     posX: this.posX,
-        //                     posY: this.posY,
-        //                     polygon: this.collidingProps.activeShape,
-        //                 };
-
-        //                 const polygon2 = {
-        //                     posX: go.posX,
-        //                     posY: go.posY,
-        //                     polygon: go.collidingProps.activeShape,
-        //                 };
-
-        //                 diagCollide(polygon1, polygon2);
-        //                 // if (collide) continue;
-
-        //                 // (this.targetX - this.posX) * coef
-        //                 this.posX = polygon1.posX;
-        //                 this.posY = polygon1.posY;
-
-        //                 // go.posX = polygon2.posX;
-        //                 // go.posY = polygon2.posY;
-
-        //                 // this.collision = collide;
-        //             }
-        //         }
-        //     }
-        // }
 
         let pushRotationSpeed = this.rotationSpeed;
-        // this.speed == 0
-        //     ? this.rotationSpeed
-        //     : this.rotationSpeed - this.speed / 100;
-
-        // console.log(pushRotationSpeed);
 
         this.engine = "OFF";
         if (this.networkMovement == "UP") {
@@ -225,11 +165,6 @@ export class HeavyTankBody extends TankBody {
             }
         }
 
-        // if (CanvasManager.keyDown("p")) {
-        //     this.posX = 0;
-        //     this.posY = 0;
-        // }
-
         if (this.collidingProps != null) {
             this.collidingProps.activeShape = updateShape(
                 this.posX + this.width / 2,
@@ -242,11 +177,19 @@ export class HeavyTankBody extends TankBody {
                 const room = RoomManager.getRoomByCode(this.player.roomCode);
 
                 if (room != undefined) {
-                    const tankBodies = room?.players.map((player) =>
-                        player.id == this.player.id ? null : player.tankBody
-                    );
+                    const tankBodies = [
+                        ...this.gameManager.gameObjects.tankBodies.map(
+                            (tankBody) => {
+                                return tankBody;
+                            }
+                        ),
+                        ...this.gameManager.gameObjects.walls.map((wall) => {
+                            return wall;
+                        }),
+                    ];
 
                     for (let go of tankBodies) {
+                        if (go.id == this.id) continue;
                         if (go == null) continue;
                         if (go.collidingProps == null) return;
 
@@ -256,15 +199,14 @@ export class HeavyTankBody extends TankBody {
                         );
                         if (collide) {
                             this.rotation = tempRotation;
+                            this.posX = this.tempPosX;
+                            this.posY = this.tempPosY;
                             break;
                         }
                     }
                 }
             }
         }
-
-        //debug
-        // this.rotation = tempRotation;
 
         if (this.engine == "OFF") {
             if (this.speed > 0) {
@@ -277,37 +219,7 @@ export class HeavyTankBody extends TankBody {
         this.weapon.update(deltaTime);
     }
 
-    onCollide(posX: number, posY: number, gameObject: HeavyTankBody): void {
-        if (gameObject.tag == "tankBody") return;
-        if (gameObject.collidingProps == null) return;
-        if (this.collidingProps == null) return;
-
-        this.collision = true;
-        this.speed = 0;
-
-        // this.posX = this.tempPosX;
-        // this.posY = this.tempPosY;
-
-        const polygon1 = {
-            posX: gameObject.posX,
-            posY: gameObject.posY,
-            polygon: gameObject.collidingProps.activeShape,
-        };
-
-        const polygon2 = {
-            posX: this.posX,
-            posY: this.posY,
-            polygon: this.collidingProps.activeShape,
-        };
-
-        diagCollide(polygon1, polygon2);
-
-        this.posX = polygon2.posX;
-        this.posY = polygon2.posY;
-
-        gameObject.posX = polygon1.posX;
-        gameObject.posY = polygon1.posY;
-    }
+    onCollide(posX: number, posY: number, gameObject: HeavyTankBody): void {}
 
     networkController(data: {
         rotate: "LEFT" | "RIGHT" | "NONE";
@@ -346,6 +258,7 @@ export class HeavyTankBody extends TankBody {
             _type: this._type,
             collision: this.collision,
             spells: this.spells.map((spell) => spell.network()),
+            gold: this.gold,
         };
     }
 }
@@ -353,8 +266,8 @@ export class HeavyTankBody extends TankBody {
 export class EngeenierTankBody extends TankBody {
     width: number;
     height: number;
-    constructor(player: Player) {
-        super("engeenier", player);
+    constructor(gameManager: GameManager, player: Player) {
+        super(gameManager, "engeenier", player);
         this.width = 0;
         this.height = 0;
     }

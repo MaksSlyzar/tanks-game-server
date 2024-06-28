@@ -1,10 +1,20 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const TankBody_1 = require("../GameObjects/TankBody");
 const Builds_1 = require("../GameObjects/Builds/Builds");
 const Enemies_1 = require("../GameObjects/Enemies/Enemies");
+const events_1 = require("../server/events");
+const Wall_1 = __importDefault(require("../GameObjects/Walls/Wall"));
+const RoomManager_1 = __importDefault(require("./RoomManager"));
 class GameManager {
     constructor(room) {
+        this.wave = 1;
+        this.generateWave = -1;
+        this.baseBuild = null;
+        this.waveEnemies = 3;
         this.room = room;
         this.currentTime = new Date();
         this.diff = 0;
@@ -15,25 +25,41 @@ class GameManager {
             projectiles: [],
             enemies: [],
             builds: [],
+            walls: [],
         };
+    }
+    gameEnd() {
+        this.room.io.to(this.room.roomCode).emit("gameEnd", {
+            enemiesKilled: 0,
+            topOne: "",
+        });
+        RoomManager_1.default.deleteRoom(this.room.roomCode);
     }
     generateTanks() {
         this.room.players.forEach((player, index) => {
             switch (player.gameRole) {
                 case "engeenier":
-                    player.tankBody = new TankBody_1.EngeenierTankBody(player);
+                    player.tankBody = new TankBody_1.EngeenierTankBody(this, player);
                     break;
                 case "heavy":
-                    player.tankBody = new TankBody_1.HeavyTankBody(player);
+                    player.tankBody = new TankBody_1.HeavyTankBody(this, player);
                     break;
             }
             if (player.tankBody != null) {
-                player.tankBody.posY = index * 200;
+                player.tankBody.posY = (index + 1) * 200;
                 this.gameObjects.tankBodies.push(player.tankBody);
             }
         });
-        const baseBuild = new Builds_1.BaseBuild();
-        this.gameObjects.enemies.push(new Enemies_1.TestEnemy(baseBuild));
+        const baseBuild = new Builds_1.BaseBuild(this);
+        for (let i = 0; i < 3; i++) {
+            const testEnemy = new Enemies_1.TestEnemy(this, baseBuild);
+            testEnemy.posX = (0, events_1.getRandomInt)(0, 3000);
+            testEnemy.posY = -100;
+            this.gameObjects.enemies.push(testEnemy);
+        }
+        this.gameObjects.walls.push(new Wall_1.default(this, 0, 0, 32, 5000));
+        this.gameObjects.walls.push(new Wall_1.default(this, 0, 0, 5000, 32));
+        this.baseBuild = baseBuild;
         this.gameObjects.builds.push(baseBuild);
         this.room.players.map((pl) => (pl.gameSession = "playing"));
         this.createGameObjectsEvent(null);
@@ -62,7 +88,71 @@ class GameManager {
                 },
             });
     }
+    collision() {
+        // const collidingGameObjects = [
+        //     ...this.gameObjects.projectiles.filter(
+        //         (_projectile) => _projectile.collidingProps != null
+        //     ),
+        //     ...this.gameObjects.builds.filter(
+        //         (_build) => _build.collidingProps != null
+        //     ),
+        //     ...this.gameObjects.enemies.filter(
+        //         (_enemy) => _enemy.collidingProps != null
+        //     ),
+        //     ...this.gameObjects.tankBodies.filter(
+        //         (_tankBody) => _tankBody.collidingProps != null
+        //     ),
+        // ];
+        // collidingGameObjects.forEach((gameObject) => {
+        //     if (gameObject.collidingProps == null) return;
+        //     for (let testCollide of collidingGameObjects) {
+        //         if (testCollide.id == gameObject.id) continue;
+        //         if (testCollide.collidingProps == null) continue;
+        //         const test1 = updateShape(
+        //             testCollide.posX + testCollide.width / 2,
+        //             testCollide.posY + testCollide.height / 2,
+        //             testCollide.rotation,
+        //             testCollide.collidingProps.shape
+        //         );
+        //         const test2 = updateShape(
+        //             gameObject.posX + gameObject.width / 2,
+        //             gameObject.posY + gameObject.height / 2,
+        //             gameObject.rotation,
+        //             gameObject.collidingProps.shape
+        //         );
+        //         let collide = satCollide(test1, test2);
+        //         if (!collide) return;
+        //         // diagCollide(polygon1, polygon2);
+        //         gameObject.onCollide(0, 0, testCollide);
+        //         testCollide.onCollide(0, 0, gameObject);
+        //     }
+        // });
+    }
+    waveTimer() {
+        this.generateWave -= 1;
+        if (this.generateWave == -1) {
+            this.wave += 1;
+            if (this.baseBuild == null)
+                return;
+            for (let i = 0; i < this.wave * 3; i++) {
+                const testEnemy = new Enemies_1.TestEnemy(this, this.baseBuild);
+                testEnemy.posX = (0, events_1.getRandomInt)(0, 3000);
+                testEnemy.posY = -100;
+                this.gameObjects.enemies.push(testEnemy);
+            }
+            this.waveEnemies = this.wave * 3;
+        }
+        else {
+            setTimeout(() => this.waveTimer(), 1000);
+        }
+    }
     update() {
+        if (this.gameObjects.enemies.length == 0) {
+            if (this.generateWave == -1) {
+                this.generateWave = 15;
+                this.waveTimer();
+            }
+        }
         this.currentTime = new Date();
         this.diff = this.currentTime.getTime() - this.lastDate.getTime();
         this.deltaTime = this.diff / 100;
@@ -70,6 +160,8 @@ class GameManager {
             ...this.gameObjects.enemies,
             ...this.gameObjects.projectiles,
             ...this.gameObjects.tankBodies,
+            ...this.gameObjects.builds,
+            ...this.gameObjects.walls,
         ];
         gameObjects.map((go) => {
             go.update(this.deltaTime);
@@ -82,6 +174,9 @@ class GameManager {
                 projectiles: this.gameObjects.projectiles.map((projectile) => projectile.network()),
                 builds: this.gameObjects.builds.map((build) => build.network()),
             },
+            wave: this.wave,
+            generateWave: this.generateWave,
+            waveEnemies: this.waveEnemies,
         });
         this.lastDate = this.currentTime;
         setTimeout(() => this.update(), 10);

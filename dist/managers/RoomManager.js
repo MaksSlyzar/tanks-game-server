@@ -25,6 +25,11 @@ class RoomManager {
     getRoomByCode(roomCode) {
         return this.rooms.find((r) => r.roomCode == roomCode);
     }
+    deleteRoom(roomCode) {
+        const roomIndex = this.rooms.findIndex(room => room.roomCode == roomCode);
+        if (roomCode)
+            this.rooms.splice(roomIndex, 1);
+    }
     join(roomCode, player) {
         const room = this.getRoomByCode(roomCode);
         if (room == undefined)

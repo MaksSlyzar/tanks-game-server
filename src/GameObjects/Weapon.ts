@@ -1,3 +1,4 @@
+import GameManager from "../managers/GameManager";
 import RoomManager from "../managers/RoomManager";
 import GameObject from "./GameObject";
 import { ShootSpell, Spell } from "./Spells/Spells";
@@ -6,8 +7,8 @@ import { HeavyTankBody } from "./TankBody";
 export class Weapon extends GameObject {
     spells: Array<Spell> = [];
 
-    constructor() {
-        super();
+    constructor(gameManager: GameManager) {
+        super(gameManager);
     }
 }
 
@@ -18,8 +19,8 @@ export class HeavyWeapon extends Weapon {
     dx: number = 0;
     dy: number = 0;
 
-    constructor(tankBody: HeavyTankBody) {
-        super();
+    constructor(gameManager: GameManager, tankBody: HeavyTankBody) {
+        super(gameManager);
         this.rotationSpeed = 0.225;
         this.rotation = 0.09;
         this.tankBody = tankBody;
@@ -34,17 +35,6 @@ export class HeavyWeapon extends Weapon {
     }
 
     update(deltaTime: number): void {
-        // if (CanvasManager.keyDown("e")) {
-        //     this.rotation -= 0.02;
-        // }
-
-        // if (CanvasManager.keyDown("r")) {
-        //     this.rotation += 0.02;
-        // }
-
-        // const dx = CanvasManager.mouse.x - this.tankBody.posX -45;
-        // const dy = CanvasManager.mouse.y - this.tankBody.posY -40;
-
         const addRotation =
             -Math.atan2(this.dx, this.dy) + (90 * Math.PI) / 180;
 

@@ -3,17 +3,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.events = exports.generateToken = void 0;
+exports.events = exports.getRandomInt = exports.generateToken = void 0;
 const RoomManager_1 = __importDefault(require("../managers/RoomManager"));
 function generateToken() {
     return String(Math.round(Math.random() * 1000000));
 }
 exports.generateToken = generateToken;
+function getRandomInt(min, max) {
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+}
+exports.getRandomInt = getRandomInt;
 exports.events = {
     register: {
         execute(socket, io, data) {
             const { username } = data;
             const player = RoomManager_1.default.createPlayer(socket, username, generateToken());
+            socket.join("menu");
             socket.emit("authSuccessfully", Object.assign(Object.assign({}, player.networkData()), { token: player.token }));
             const roomData = RoomManager_1.default.rooms.map((room) => room.networkData());
             socket.emit("updateRoomList", { roomsData: roomData });
@@ -33,6 +40,7 @@ exports.events = {
             socket.emit("authSuccessfully", Object.assign(Object.assign({}, player.networkData()), { token: player.token }));
             player.connect();
             if (player.gameSession == "menu") {
+                socket.join("menu");
                 const roomData = RoomManager_1.default.rooms.map((room) => room.networkData());
                 socket.emit("updateRoomList", { roomsData: roomData });
             }
@@ -66,10 +74,10 @@ exports.events = {
             if (player == null)
                 return false;
             RoomManager_1.default.create(data.roomName, io);
-            RoomManager_1.default.join(data.roomName, player);
             player.isRoomLeader = true;
             const roomData = RoomManager_1.default.rooms.map((room) => room.networkData());
-            io.emit("updateRoomList", { roomsData: roomData });
+            io.to("menu").emit("updateRoomList", { roomsData: roomData });
+            RoomManager_1.default.join(data.roomName, player);
             return true;
         },
     },
@@ -155,6 +163,25 @@ exports.events = {
             if (player.gameSession != "playing")
                 return false;
             (_a = player.tankBody) === null || _a === void 0 ? void 0 : _a.useSpell(data);
+            return true;
+        },
+    },
+    exitRoom: {
+        execute(socket, io, data) {
+            const player = RoomManager_1.default.getPlayerBySocketId(socket.id);
+            if (!player)
+                return false;
+            if (!player.roomCode)
+                return false;
+            const room = RoomManager_1.default.getRoomByCode(player.roomCode);
+            if (!room)
+                return false;
+            room.removePlayer(socket.id);
+            player.roomCode = null;
+            player.isRoomLeader = false;
+            player.gameSession = "menu";
+            const roomData = RoomManager_1.default.rooms.map((room) => room.networkData());
+            socket.emit("updateRoomList", { roomsData: roomData });
             return true;
         },
     },

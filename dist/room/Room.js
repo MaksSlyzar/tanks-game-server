@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const GameManager_1 = __importDefault(require("../managers/GameManager"));
+const RoomManager_1 = __importDefault(require("../managers/RoomManager"));
 class Room {
     constructor(roomCode, io) {
         this.roomCode = roomCode;
@@ -11,9 +12,14 @@ class Room {
         this.io = io;
         this.gameManager = new GameManager_1.default(this);
         this.roomType = "Normal";
-        this.leaderPlayerId = "";
+        this.leaderPlayerId = null;
     }
     removePlayer(socketId) {
+        const player = RoomManager_1.default.getPlayerBySocketId(socketId);
+        if (player) {
+            if (player.id == this.leaderPlayerId)
+                RoomManager_1.default.deleteRoom(this.roomCode);
+        }
         for (let i = 0; i < this.players.length; i++) {
             if (this.players[i].socket.id == socketId) {
                 this.players.splice(i, 1);
@@ -24,7 +30,10 @@ class Room {
         return false;
     }
     joinRoom(player) {
+        if (this.leaderPlayerId == null)
+            this.leaderPlayerId = player.id;
         this.players.push(player);
+        player.socket.rooms.clear();
         player.socket.join(this.roomCode);
         player.roomReady = false;
         this.updateRoomViewData();

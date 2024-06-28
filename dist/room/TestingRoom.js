@@ -11,7 +11,7 @@ class TestingRoom extends Room_1.default {
     joinRoom(player) {
         if (this.players.length == 0) {
             player.isRoomLeader = true;
-            this.leaderPlayerId = String(player.id);
+            // this.leaderPlayerId = String(player.id);
         }
         this.players.push(player);
         player.socket.join(this.roomCode);

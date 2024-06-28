@@ -9,8 +9,10 @@ const SAT_1 = require("../modules/SAT");
 const GameObject_1 = __importDefault(require("./GameObject"));
 const Weapon_1 = require("./Weapon");
 class TankBody extends GameObject_1.default {
-    constructor(_type, player) {
-        super();
+    constructor(gameManager, _type, player) {
+        super(gameManager);
+        this.tag = "tankBody";
+        this.gold = 0;
         this.posX = 0;
         this.posY = 0;
         this.rotation = 0;
@@ -21,12 +23,11 @@ class TankBody extends GameObject_1.default {
         this.maxHp = 100;
     }
     decraseHp(damage) {
-        //TODO: decrase hp function
         this.hp -= damage;
         if (this.hp < 0) {
             this.hp = this.maxHp;
-            this.posX = 0;
-            this.posY = 0;
+            this.posX = 50;
+            this.posY = 50;
         }
     }
     networkData() {
@@ -37,19 +38,22 @@ class TankBody extends GameObject_1.default {
 }
 exports.TankBody = TankBody;
 class HeavyTankBody extends TankBody {
-    constructor(player) {
-        super("heavy", player);
+    constructor(gameManager, player) {
+        super(gameManager, "heavy", player);
         this.width = 116;
         this.height = 75;
         this.pushSpeed = 1.12;
         this.standartPushSpeed = 10;
+        this.tempPosX = 0;
+        this.tempPosY = 0;
+        this.tag = "tank";
         this.speed = 0;
-        this.hp = 80;
+        this.hp = 100;
         this.maxHp = 100;
         this.maxSpeed = 20;
         this.rotationSpeed = 0.115;
-        this.posX = 1110;
-        this.posY = 1000;
+        this.posX = 300;
+        this.posY = 300;
         this.rotation = 0.03;
         this.minSpeed = -10;
         this.engine = "OFF";
@@ -60,65 +64,25 @@ class HeavyTankBody extends TankBody {
             activeShape: [],
             shape: (0, SAT_1.quadColliderMesh)(this.width, this.height),
         };
-        this.weapon = new Weapon_1.HeavyWeapon(this);
+        this.weapon = new Weapon_1.HeavyWeapon(this.gameManager, this);
         this.collision = false;
     }
     update(deltaTime) {
-        const tempPosX = this.posX;
-        const tempPosY = this.posY;
+        this.tempPosX = [...[this.posX]][0];
+        this.tempPosY = [...[this.posY]][0];
         const tempRotation = this.rotation;
-        let rotationCollision = false;
-        this.posX += Math.cos(this.rotation) * this.speed * deltaTime;
-        this.posY += Math.sin(this.rotation) * this.speed * deltaTime;
-        this.collision = false;
-        if (this.collidingProps != null) {
+        if (this.collidingProps)
             this.collidingProps.activeShape = (0, SAT_1.updateShape)(this.posX + this.width / 2, this.posY + this.height / 2, this.rotation, this.collidingProps.shape);
-            if (this.player.roomCode) {
-                const room = RoomManager_1.default.getRoomByCode(this.player.roomCode);
-                if (room != undefined) {
-                    const gameObjects = [
-                        ...room.gameManager.gameObjects.tankBodies,
-                    ];
-                    for (let go of gameObjects) {
-                        if (go.id == this.id)
-                            continue;
-                        if (go.collidingProps == null)
-                            continue;
-                        let collide = (0, SAT_1.satCollide)(this.collidingProps.activeShape, go.collidingProps.activeShape);
-                        if (collide) {
-                            this.collision = true;
-                            // this.posX = tempPosX;
-                            this.speed = 1;
-                            // this.posY = tempPosY;
-                            this.speed = 0;
-                        }
-                        const polygon1 = {
-                            posX: this.posX,
-                            posY: this.posY,
-                            polygon: this.collidingProps.activeShape,
-                        };
-                        const polygon2 = {
-                            posX: go.posX,
-                            posY: go.posY,
-                            polygon: go.collidingProps.activeShape,
-                        };
-                        (0, SAT_1.diagCollide)(polygon1, polygon2);
-                        // if (collide) continue;
-                        // (this.targetX - this.posX) * coef
-                        this.posX = polygon1.posX;
-                        this.posY = polygon1.posY;
-                        // go.posX = polygon2.posX;
-                        // go.posY = polygon2.posY;
-                        // this.collision = collide;
-                    }
-                }
-            }
+        let rotationCollision = false;
+        if (!this.collision) {
+            this.posX += Math.cos(this.rotation) * this.speed * deltaTime;
+            this.posY += Math.sin(this.rotation) * this.speed * deltaTime;
+        }
+        else {
+            this.speed = 0;
+            this.collision = false;
         }
         let pushRotationSpeed = this.rotationSpeed;
-        // this.speed == 0
-        //     ? this.rotationSpeed
-        //     : this.rotationSpeed - this.speed / 100;
-        // console.log(pushRotationSpeed);
         this.engine = "OFF";
         if (this.networkMovement == "UP") {
             if (this.maxSpeed > this.speed) {
@@ -152,17 +116,22 @@ class HeavyTankBody extends TankBody {
                 this.rotation += pushRotationSpeed * deltaTime;
             }
         }
-        // if (CanvasManager.keyDown("p")) {
-        //     this.posX = 0;
-        //     this.posY = 0;
-        // }
         if (this.collidingProps != null) {
             this.collidingProps.activeShape = (0, SAT_1.updateShape)(this.posX + this.width / 2, this.posY + this.height / 2, this.rotation, this.collidingProps.shape);
             if (this.player.roomCode) {
                 const room = RoomManager_1.default.getRoomByCode(this.player.roomCode);
                 if (room != undefined) {
-                    const tankBodies = room === null || room === void 0 ? void 0 : room.players.map((player) => player.id == this.player.id ? null : player.tankBody);
+                    const tankBodies = [
+                        ...this.gameManager.gameObjects.tankBodies.map((tankBody) => {
+                            return tankBody;
+                        }),
+                        ...this.gameManager.gameObjects.walls.map((wall) => {
+                            return wall;
+                        }),
+                    ];
                     for (let go of tankBodies) {
+                        if (go.id == this.id)
+                            continue;
                         if (go == null)
                             continue;
                         if (go.collidingProps == null)
@@ -170,14 +139,14 @@ class HeavyTankBody extends TankBody {
                         let collide = (0, SAT_1.satCollide)(this.collidingProps.activeShape, go.collidingProps.activeShape);
                         if (collide) {
                             this.rotation = tempRotation;
+                            this.posX = this.tempPosX;
+                            this.posY = this.tempPosY;
                             break;
                         }
                     }
                 }
             }
         }
-        //debug
-        // this.rotation = tempRotation;
         if (this.engine == "OFF") {
             if (this.speed > 0) {
                 this.speed -= this.pushSpeed;
@@ -188,6 +157,7 @@ class HeavyTankBody extends TankBody {
         }
         this.weapon.update(deltaTime);
     }
+    onCollide(posX, posY, gameObject) { }
     networkController(data) {
         this.networkRotate = data.rotate;
         this.networkMovement = data.movement;
@@ -214,13 +184,14 @@ class HeavyTankBody extends TankBody {
             _type: this._type,
             collision: this.collision,
             spells: this.spells.map((spell) => spell.network()),
+            gold: this.gold,
         };
     }
 }
 exports.HeavyTankBody = HeavyTankBody;
 class EngeenierTankBody extends TankBody {
-    constructor(player) {
-        super("engeenier", player);
+    constructor(gameManager, player) {
+        super(gameManager, "engeenier", player);
         this.width = 0;
         this.height = 0;
     }

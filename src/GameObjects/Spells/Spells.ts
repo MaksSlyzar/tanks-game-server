@@ -64,11 +64,11 @@ export class ShootSpell extends Spell {
             Math.sin(weaponRotation + rotation) * 70 + posY + height / 2;
 
         const projectile = new Projectile(
+            this.gameManager,
             200,
             { x: spawnX, y: spawnY },
             rotation + weaponRotation,
-            tankBody.id,
-            this.gameManager
+            tankBody.id
         );
         this.gameManager.gameObjects.projectiles.push(projectile);
     }
